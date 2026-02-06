@@ -24,7 +24,7 @@ detector = GeminiDetector()
 def read_root():
     return {"message": "Object Detection API with Gemini Flash is running!"}
 
-@app.post("/detect-raw")
+@app.post("/detect")
 async def detect_object_raw(request: Request):
     """
     Endpoint for Flutter (Uint8List). Accepts raw bytes in the request body.
@@ -35,7 +35,7 @@ async def detect_object_raw(request: Request):
              return JSONResponse(status_code=400, content={"error": "No data received"})
         
         # Run detection directly on bytes
-        result = detector.detect(data)
+        result = await detector.detect(data)
         
         return result
 
@@ -47,4 +47,4 @@ if __name__ == "__main__":
  
     if not os.environ.get("GEMINI_API_KEY"):
          print("CRITICAL: GEMINI_API_KEY environment variable is not set.")
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("PORT", 8000)))
