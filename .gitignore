@@ -20,5 +20,3 @@ Thumbs.db
 .idea/
 .gemini/
 brain/
-requirements.txt
-# (Note: requirements.txt is usually NOT ignored, but included here for reference if you have private deps)
