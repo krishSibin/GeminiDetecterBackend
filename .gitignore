@@ -1,0 +1,24 @@
+# Environment variables (Sensitive data)
+.env
+.env.txt
+
+# Python temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+vnext/
+env/
+venv/
+ENV/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Deployment / IDE items
+.vscode/
+.idea/
+.gemini/
+brain/
+requirements.txt
+# (Note: requirements.txt is usually NOT ignored, but included here for reference if you have private deps)
