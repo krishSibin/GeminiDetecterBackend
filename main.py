@@ -5,6 +5,11 @@ from dotenv import load_dotenv
 from typing import List, Optional
 import os
 import httpx
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from gemini_detector import GeminiDetector
 
@@ -32,7 +37,10 @@ async def fetch_price_serpapi(query: str) -> Optional[dict]:
       {"price": "₹1,299", "title": "...", "source": "...", "link": "..."}
     """
     if not SERPAPI_KEY:
+        logger.warning("SERPAPI_KEY not found in environment variables")
         return None
+
+    logger.info(f"Fetching price for query: {query}")
 
     url = "https://serpapi.com/search.json"
     params = {
@@ -51,6 +59,7 @@ async def fetch_price_serpapi(query: str) -> Optional[dict]:
 
     results = data.get("shopping_results") or []
     if not results:
+        logger.info(f"No shopping results found for: {query}")
         return None
 
     top = results[0]
@@ -88,6 +97,7 @@ async def detect_single(request: Request):
 
         price_info = await fetch_price_serpapi(search_query) if search_query else None
         result["price_info"] = price_info  # can be null
+        logger.info(price_info)
 
         return result
 
@@ -122,7 +132,7 @@ async def detect_gallery(files: List[UploadFile] = File(...)):
 
         price_info = await fetch_price_serpapi(search_query) if search_query else None
         result["price_info"] = price_info
-        # print(result)
+        logger.info(price_info)
 
         return result
 
