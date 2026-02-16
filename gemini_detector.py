@@ -6,7 +6,9 @@ from google import genai
 from pydantic import BaseModel
 from typing import List, Union
 from PIL import Image
+from datetime import date
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -18,6 +20,12 @@ class DetectionResult(BaseModel):
     category: str
     confidence_score: float
     model_code: Optional[str] = None
+
+class WarrantyResult(BaseModel):
+    expiry_date: Optional[date] = None
+
+
+     
 
 
 
@@ -129,3 +137,43 @@ class GeminiDetector:
         Helper for FastAPI endpoints to call detect() with multiple images
         """
         return await self.detect(images)
+
+
+    async def extract_warranty_date(self, image_bytes: bytes) -> Optional[str]:
+        """
+        Extracts the warranty expiration date from an image.
+        Returns ISO format string (YYYY-MM-DD) or None.
+        """
+        if not self.client:
+            print("Client not initialized")
+            return None
+
+        prompt = """
+        Analyze this warranty card or receipt image.
+        Identify the warranty expiration date.
+        If only the purchase date and warranty duration (e.g., '2 years') are visible, calculate the expiration date.
+        Return the date in ISO 8601 format (YYYY-MM-DD).
+        If no date can be determined, return null.
+        """
+
+        try:
+            # Load raw bytes -> PIL Image
+            img = self.load_image_from_bytes(image_bytes)
+            
+            response = await self.client.aio.models.generate_content(
+                model='gemini-2.5-flash-lite',
+                contents=[prompt, img],
+                config={
+                    'response_mime_type': 'application/json',
+                    'response_schema': WarrantyResult,
+                }
+            )
+
+            if response.parsed and response.parsed.expiry_date:
+                return response.parsed.expiry_date.isoformat()
+            
+            return None
+
+        except Exception as e:
+            print(f"Warranty Extraction Error: {e}")
+            return None           

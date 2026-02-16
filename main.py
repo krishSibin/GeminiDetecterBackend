@@ -6,6 +6,7 @@ from typing import List, Optional
 import os
 import httpx
 import logging
+from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +29,37 @@ app.add_middleware(
 detector = GeminiDetector()
 
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY")
+
+class WarrantyRequest(BaseModel):
+    image_url: str
+
+
+
+# --------------------------------------------------
+# EXTRACT WARRANTY DATE
+# --------------------------------------------------
+@app.post("/extract-warranty")
+async def extract_warranty(request: WarrantyRequest):
+    try:
+        if not request.image_url:
+            return JSONResponse(status_code=400, content={"error": "No image URL provided"})
+
+        # Download image from URL
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(request.image_url)
+            if resp.status_code != 200:
+                return JSONResponse(status_code=400, content={"error": "Failed to download image"})
+            image_bytes = resp.content
+
+        # Use Gemini to extract date
+        expiry_date = await detector.extract_warranty_date(image_bytes)
+
+        return {"expiry_date": expiry_date}
+
+    except Exception as e:
+        logger.error(f"Warranty extraction failed: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 
 
 async def fetch_price_serpapi(query: str) -> Optional[dict]:
